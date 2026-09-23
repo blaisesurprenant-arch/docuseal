@@ -1,0 +1,29 @@
+FROM ruby:4.0.5-alpine AS dev
+
+ENV RAILS_ENV=test
+ENV NODE_ENV=test
+ENV OPENSSL_CONF=/etc/openssl_legacy.cnf
+ENV BUNDLE_PATH=/usr/local/bundle
+
+WORKDIR /app
+
+RUN apk add --no-cache build-base git libpq-dev libpq yaml-dev nodejs yarn \
+      vips redis onnxruntime leptonica chromium chromium-chromedriver \
+      ttf-freefont postgresql-client
+
+RUN echo $'.include = /etc/ssl/openssl.cnf\n\
+\n\
+[provider_sect]\n\
+default = default_sect\n\
+legacy = legacy_sect\n\
+\n\
+[default_sect]\n\
+activate = 1\n\
+\n\
+[legacy_sect]\n\
+activate = 1' >> /etc/openssl_legacy.cnf
+
+COPY ./Gemfile ./Gemfile.lock ./
+RUN bundle install
+
+CMD ["tail", "-f", "/dev/null"]

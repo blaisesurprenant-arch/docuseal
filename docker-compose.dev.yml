@@ -1,0 +1,36 @@
+services:
+  test-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    tmpfs:
+      - /var/lib/postgresql/data
+    mem_limit: 256m
+
+  app-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    depends_on:
+      test-db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - bundle_dev:/usr/local/bundle
+    environment:
+      RAILS_ENV: test
+      PGHOST: test-db
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      SECRET_KEY_BASE: dev_test_only_secret_key_base_not_for_production_use_0000000000
+    mem_limit: 1024m
+
+volumes:
+  bundle_dev:
