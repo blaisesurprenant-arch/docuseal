@@ -6,7 +6,9 @@ module Roles
   def find_or_create_by_name(account, name)
     return nil if name.blank?
 
-    account.roles.where('lower(name) = ?', name.to_s.downcase).first ||
-      account.roles.create!(name: name.to_s.strip)
+    normalized_name = name.to_s.strip
+
+    account.roles.where('lower(name) = ?', normalized_name.downcase).first ||
+      account.roles.create!(name: normalized_name)
   end
 end

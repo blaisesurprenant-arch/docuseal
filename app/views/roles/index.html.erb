@@ -1,16 +1,21 @@
-<h1 class="text-2xl md:text-3xl font-bold mb-4">Roles</h1>
+<div class="flex flex-wrap space-y-4 md:flex-nowrap md:space-y-0 md:space-x-10">
+  <%= render 'shared/settings_nav' %>
+  <div class="flex-grow min-w-0">
+    <h1 class="text-2xl md:text-3xl font-bold mb-4">Roles</h1>
 
-<div class="space-y-2 mb-6">
-  <% @roles.each do |role| %>
-    <div id="role_<%= role.id %>" class="flex items-center gap-2">
-      <span class="font-medium"><%= role.name %></span>
-      <%= form_for role, url: settings_role_path(role), method: :patch, html: { class: 'flex items-center gap-2' } do |f| %>
-        <%= f.text_field :name, name: "roles[#{role.id}][name]", value: role.name, class: 'base-input' %>
-        <%= f.submit 'Save', class: 'btn btn-neutral btn-sm' %>
+    <div class="space-y-2 mb-6">
+      <% @roles.each do |role| %>
+        <div id="role_<%= role.id %>" class="flex items-center gap-2">
+          <span class="font-medium"><%= role.name %></span>
+          <%= form_for role, url: settings_role_path(role), method: :patch, html: { class: 'flex items-center gap-2' } do |f| %>
+            <%= f.text_field :name, name: "roles[#{role.id}][name]", value: role.name, class: 'base-input' %>
+            <%= f.submit 'Save', class: 'btn btn-neutral btn-sm' %>
+          <% end %>
+          <%= button_to 'Delete', settings_role_path(role), method: :delete, form: { data: { turbo_confirm: 'Are you sure?' } }, class: 'btn btn-outline btn-sm' %>
+        </div>
       <% end %>
-      <%= button_to 'Delete', settings_role_path(role), method: :delete, form: { data: { turbo_confirm: 'Are you sure?' } }, class: 'btn btn-outline btn-sm' %>
     </div>
-  <% end %>
-</div>
 
-<%= render 'form', role: @role %>
+    <%= render 'form', role: @role %>
+  </div>
+</div>

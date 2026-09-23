@@ -1,0 +1,5 @@
+<% if can?(:read, Role) %>
+  <li>
+    <%= link_to 'Roles', settings_roles_path, class: 'text-base hover:bg-base-300' %>
+  </li>
+<% end %>
