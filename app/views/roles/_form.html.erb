@@ -1,0 +1,4 @@
+<%= form_for role, url: settings_roles_path, html: { class: 'flex items-center gap-2' } do |f| %>
+  <%= f.text_field :name, class: 'base-input', placeholder: 'e.g. Buyer' %>
+  <%= f.submit 'Add Role', class: 'btn btn-neutral btn-sm' %>
+<% end %>
