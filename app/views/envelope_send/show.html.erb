@@ -1,0 +1,14 @@
+<h1 class="text-2xl font-bold mb-4">Choose Parties for <%= @envelope.name %></h1>
+
+<%= form_for :envelope, url: transaction_envelope_send_path(@transaction, @envelope), method: :post do %>
+  <div class="space-y-2 mb-4">
+    <% @candidate_parties.each do |party| %>
+      <label class="flex items-center gap-2">
+        <%= check_box_tag 'party_ids[]', party.id, true, id: "party_ids_#{party.id}" %>
+        <%= party.display_name %> (<%= party.role.name %>)
+      </label>
+    <% end %>
+  </div>
+
+  <%= submit_tag 'Send', class: 'btn btn-neutral' %>
+<% end %>

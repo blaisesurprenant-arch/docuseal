@@ -2,7 +2,7 @@
 
 <% if @unresolved_role_names.empty? %>
   <p class="text-success mb-4">All roles resolved.</p>
-  <%= link_to 'Next: Choose Parties', '#', class: 'btn btn-neutral' %>
+  <%= link_to 'Next: Choose Parties', transaction_envelope_send_path(@transaction, @envelope), class: 'btn btn-neutral' %>
 <% else %>
   <p class="mb-4">These templates use roles that don't have a matching party on this transaction yet:</p>
   <div class="space-y-2">
