@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_23_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_catalog.plpgsql"
@@ -505,6 +505,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_000001) do
     t.index ["slug"], name: "index_templates_on_slug", unique: true
   end
 
+  create_table "transactions", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "created_by_user_id"
+    t.string "name", null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_transactions_on_account_id"
+    t.index ["created_by_user_id"], name: "index_transactions_on_created_by_user_id"
+  end
+
   create_table "user_configs", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "key", null: false
@@ -630,6 +641,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_000001) do
   add_foreign_key "templates", "accounts"
   add_foreign_key "templates", "template_folders", column: "folder_id"
   add_foreign_key "templates", "users", column: "author_id"
+  add_foreign_key "transactions", "accounts"
+  add_foreign_key "transactions", "users", column: "created_by_user_id"
   add_foreign_key "user_configs", "users"
   add_foreign_key "users", "accounts"
   add_foreign_key "webhook_urls", "accounts"

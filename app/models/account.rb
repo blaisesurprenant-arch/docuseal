@@ -28,6 +28,7 @@ class Account < ApplicationRecord
   has_many :templates, dependent: :destroy
   has_many :template_folders, dependent: :destroy
   has_many :roles, dependent: :destroy
+  has_many :transactions, dependent: :destroy
   has_one :default_template_folder, -> { where(name: TemplateFolder::DEFAULT_NAME) },
           class_name: 'TemplateFolder', dependent: :destroy, inverse_of: :account
   has_many :submissions, dependent: :destroy
