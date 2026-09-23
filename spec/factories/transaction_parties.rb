@@ -2,7 +2,7 @@
 
 FactoryBot.define do
   factory :transaction_party do
-    association :txn_record, factory: :transaction
+    parent_transaction { association :transaction }
     role
 
     party_type { 'individual' }

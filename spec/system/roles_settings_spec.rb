@@ -64,7 +64,7 @@ RSpec.describe 'Roles Settings' do
   it 'shows an error instead of deleting a role still in use' do
     role = create(:role, account:, name: 'Buyer')
     transaction = create(:transaction, account:)
-    create(:transaction_party, transaction:, role:)
+    create(:transaction_party, parent_transaction: transaction, role:)
 
     visit settings_roles_path
 
