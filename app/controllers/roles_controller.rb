@@ -1,14 +1,12 @@
 # frozen_string_literal: true
 
 class RolesController < ApplicationController
-  load_and_authorize_resource :role, parent: false, only: %i[index new create update destroy]
+  load_and_authorize_resource :role, parent: false, only: %i[index create update destroy]
 
   def index
     @roles = @roles.order(:name)
     @role = Role.new
   end
-
-  def new; end
 
   def create
     @role.account = current_account

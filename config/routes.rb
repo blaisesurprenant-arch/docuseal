@@ -205,7 +205,7 @@ Rails.application.routes.draw do
     resources :integration_users, only: %i[index], path: 'users/:status', controller: 'users',
                                   defaults: { status: :integration }
     resource :personalization, only: %i[show create], controller: 'personalization_settings'
-    resources :roles, only: %i[index new create update destroy]
+    resources :roles, only: %i[index create update destroy]
     resources :webhooks, only: %i[index show new create update destroy], controller: 'webhook_settings' do
       post :resend
 
