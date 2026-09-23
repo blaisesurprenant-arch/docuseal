@@ -266,7 +266,7 @@ RSpec.describe 'Roles Settings' do
   it 'shows an error instead of deleting a role still in use' do
     role = create(:role, account:, name: 'Buyer')
     transaction = create(:transaction, account:)
-    create(:transaction_party, transaction:, role:)
+    create(:transaction_party, parent_transaction: transaction, role:)
 
     visit settings_roles_path
 
@@ -804,7 +804,7 @@ git commit -m "Add Transactions dashboard tab, list, and basic CRUD"
 
 **Interfaces:**
 - Consumes: `Transaction` (Task 3), `Role` (Task 1)
-- Produces: `TransactionParty` — `belongs_to :transaction`, `belongs_to :role`, `enum :party_type, { individual: 0, business: 1 }`, `display_name` instance method other tasks (7, 10-13) use to render/label a party regardless of type.
+- Produces: `TransactionParty` — `belongs_to :parent_transaction, class_name: 'Transaction', foreign_key: :transaction_id` (named `:parent_transaction`, not `:transaction` — that name is rejected by Rails 8, see Step 4's code), `belongs_to :role`, `enum :party_type, { individual: 0, business: 1 }`, `display_name` instance method other tasks (7, 10-13) use to render/label a party regardless of type.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -817,14 +817,14 @@ RSpec.describe TransactionParty do
   let(:role) { create(:role, account:) }
 
   it 'is valid as an individual with a name and email' do
-    party = build(:transaction_party, transaction:, role:, party_type: 'individual',
+    party = build(:transaction_party, parent_transaction: transaction, role:, party_type: 'individual',
                                       first_name: 'Jane', last_name: 'Doe', email: 'jane@example.com')
 
     expect(party).to be_valid
   end
 
   it 'requires first and last name for an individual' do
-    party = build(:transaction_party, transaction:, role:, party_type: 'individual', first_name: '', last_name: '')
+    party = build(:transaction_party, parent_transaction: transaction, role:, party_type: 'individual', first_name: '', last_name: '')
 
     expect(party).not_to be_valid
     expect(party.errors[:first_name]).to be_present
@@ -832,7 +832,7 @@ RSpec.describe TransactionParty do
   end
 
   it 'is valid as a business with a company name and a signer name/title' do
-    party = build(:transaction_party, transaction:, role:, party_type: 'business',
+    party = build(:transaction_party, parent_transaction: transaction, role:, party_type: 'business',
                                       company_name: 'Acme LLC', signer_first_name: 'Jane',
                                       signer_last_name: 'Doe', signer_title: 'Managing Member',
                                       email: 'jane@acme.com')
@@ -841,7 +841,7 @@ RSpec.describe TransactionParty do
   end
 
   it 'requires company name, signer name, and signer title for a business' do
-    party = build(:transaction_party, transaction:, role:, party_type: 'business',
+    party = build(:transaction_party, parent_transaction: transaction, role:, party_type: 'business',
                                       company_name: '', signer_first_name: '', signer_last_name: '',
                                       signer_title: '')
 
@@ -853,14 +853,14 @@ RSpec.describe TransactionParty do
   end
 
   it 'builds a display name for an individual' do
-    party = build(:transaction_party, transaction:, role:, party_type: 'individual',
+    party = build(:transaction_party, parent_transaction: transaction, role:, party_type: 'individual',
                                       first_name: 'Jane', last_name: 'Doe')
 
     expect(party.display_name).to eq('Jane Doe')
   end
 
   it 'builds a display name for a business' do
-    party = build(:transaction_party, transaction:, role:, party_type: 'business',
+    party = build(:transaction_party, parent_transaction: transaction, role:, party_type: 'business',
                                       company_name: 'Acme LLC', signer_first_name: 'Jane', signer_last_name: 'Doe')
 
     expect(party.display_name).to eq('Acme LLC (Jane Doe)')
@@ -922,7 +922,12 @@ Run: `bundle exec rails db:migrate`
 # frozen_string_literal: true
 
 class TransactionParty < ApplicationRecord
-  belongs_to :transaction
+  # :transaction is a reserved association name (Rails 8 raises: it would
+  # shadow ActiveRecord::Base#transaction, the DB-transaction helper every
+  # model inherits) — named :parent_transaction instead; FK column stays
+  # transaction_id.
+  belongs_to :parent_transaction, class_name: 'Transaction', foreign_key: :transaction_id,
+                                  inverse_of: :transaction_parties
   belongs_to :role
 
   has_many :envelope_parts, dependent: :destroy
@@ -952,7 +957,7 @@ end
 In `lib/ability.rb`:
 
 ```ruby
-    can :manage, TransactionParty, transaction: { account_id: user.account_id }
+    can :manage, TransactionParty, parent_transaction: { account_id: user.account_id }
 ```
 
 - [ ] **Step 6: Write the factory**
@@ -962,7 +967,7 @@ In `lib/ability.rb`:
 
 FactoryBot.define do
   factory :transaction_party do
-    transaction
+    parent_transaction { association :transaction }
     role
 
     party_type { 'individual' }
@@ -1083,7 +1088,7 @@ RSpec.describe 'Transaction Parties' do
 
   it 'edits an existing party' do
     role = create(:role, account:, name: 'Buyer')
-    party = create(:transaction_party, transaction:, role:, first_name: 'Jane', last_name: 'Doe')
+    party = create(:transaction_party, parent_transaction: transaction, role:, first_name: 'Jane', last_name: 'Doe')
 
     visit transaction_path(transaction)
     click_link 'Edit', href: edit_transaction_transaction_party_path(transaction, party)
@@ -1300,7 +1305,7 @@ git commit -m "Add transaction party CRUD with individual/business toggle and in
 - Modify: `lib/ability.rb`
 
 **Interfaces:**
-- Produces: `Envelope` — `belongs_to :transaction`, `belongs_to :template, optional: true`, `belongs_to :submission, optional: true`, `enum :status, { draft: 0, sent: 1, completed: 2, voided: 3 }`, `has_many :envelope_source_templates, -> { order(:position) }, dependent: :destroy`, `has_many :source_templates, through: :envelope_source_templates`, `has_many :envelope_parts, dependent: :destroy`, `has_many :transaction_parties, through: :envelope_parts`.
+- Produces: `Envelope` — `belongs_to :parent_transaction, class_name: 'Transaction', foreign_key: :transaction_id` (named `:parent_transaction`, not `:transaction` — that name is rejected by Rails 8, see Step 2's code), `belongs_to :template, optional: true`, `belongs_to :submission, optional: true`, `enum :status, { draft: 0, sent: 1, completed: 2, voided: 3 }`, `has_many :envelope_source_templates, -> { order(:position) }, dependent: :destroy`, `has_many :source_templates, through: :envelope_source_templates`, `has_many :envelope_parts, dependent: :destroy`, `has_many :transaction_parties, through: :envelope_parts`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1313,7 +1318,7 @@ RSpec.describe Envelope do
   let(:author) { create(:user, account:) }
 
   it 'is valid with a name and defaults to draft status' do
-    envelope = create(:envelope, transaction:, name: 'Lease Packet')
+    envelope = create(:envelope, parent_transaction: transaction, name: 'Lease Packet')
 
     expect(envelope).to be_draft
   end
@@ -1321,7 +1326,7 @@ RSpec.describe Envelope do
   it 'tracks its source templates in order' do
     template_a = create(:template, account:, author:)
     template_b = create(:template, account:, author:)
-    envelope = create(:envelope, transaction:)
+    envelope = create(:envelope, parent_transaction: transaction)
 
     envelope.envelope_source_templates.create!(source_template: template_a, position: 0)
     envelope.envelope_source_templates.create!(source_template: template_b, position: 1)
@@ -1331,8 +1336,8 @@ RSpec.describe Envelope do
 
   it 'tracks which transaction parties are included' do
     role = create(:role, account:)
-    party = create(:transaction_party, transaction:, role:)
-    envelope = create(:envelope, transaction:)
+    party = create(:transaction_party, parent_transaction: transaction, role:)
+    envelope = create(:envelope, parent_transaction: transaction)
 
     envelope.envelope_parts.create!(transaction_party: party)
 
@@ -1416,7 +1421,12 @@ Run: `bundle exec rails db:migrate`
 # frozen_string_literal: true
 
 class Envelope < ApplicationRecord
-  belongs_to :transaction
+  # :transaction is a reserved association name (Rails 8 raises: it would
+  # shadow ActiveRecord::Base#transaction, the DB-transaction helper every
+  # model inherits) — named :parent_transaction instead; FK column stays
+  # transaction_id.
+  belongs_to :parent_transaction, class_name: 'Transaction', foreign_key: :transaction_id,
+                                  inverse_of: :envelopes
   belongs_to :template, optional: true
   belongs_to :submission, optional: true
 
@@ -1467,7 +1477,7 @@ In `app/models/template.rb`, alongside `has_many :submissions, dependent: :destr
 In `lib/ability.rb`:
 
 ```ruby
-    can :manage, Envelope, transaction: { account_id: user.account_id }
+    can :manage, Envelope, parent_transaction: { account_id: user.account_id }
 ```
 
 - [ ] **Step 7: Write the factory**
@@ -1477,7 +1487,7 @@ In `lib/ability.rb`:
 
 FactoryBot.define do
   factory :envelope do
-    transaction
+    parent_transaction { association :transaction }
 
     sequence(:name) { |n| "Envelope #{n}" }
   end
@@ -1532,7 +1542,7 @@ RSpec.describe Envelopes::Merge do
   it 'combines two templates into one saved template' do
     template_a = template_with_role_names('Buyer')
     template_b = template_with_role_names('Seller')
-    envelope = create(:envelope, transaction:)
+    envelope = create(:envelope, parent_transaction: transaction)
     envelope.envelope_source_templates.create!(source_template: template_a, position: 0)
     envelope.envelope_source_templates.create!(source_template: template_b, position: 1)
 
@@ -1546,7 +1556,7 @@ RSpec.describe Envelopes::Merge do
   it 'unifies same-named roles into a single submitter slot' do
     template_a = template_with_role_names('Buyer', 'Seller')
     template_b = template_with_role_names('Buyer')
-    envelope = create(:envelope, transaction:)
+    envelope = create(:envelope, parent_transaction: transaction)
     envelope.envelope_source_templates.create!(source_template: template_a, position: 0)
     envelope.envelope_source_templates.create!(source_template: template_b, position: 1)
 
@@ -1565,7 +1575,7 @@ RSpec.describe Envelopes::Merge do
   it 'does not corrupt attachment references across sources' do
     template_a = template_with_role_names('Buyer')
     template_b = template_with_role_names('Seller')
-    envelope = create(:envelope, transaction:)
+    envelope = create(:envelope, parent_transaction: transaction)
     envelope.envelope_source_templates.create!(source_template: template_a, position: 0)
     envelope.envelope_source_templates.create!(source_template: template_b, position: 1)
 
@@ -1580,7 +1590,7 @@ RSpec.describe Envelopes::Merge do
 
   it 'sets envelope.template to the merged template without saving the envelope' do
     template_a = template_with_role_names('Buyer')
-    envelope = create(:envelope, transaction:)
+    envelope = create(:envelope, parent_transaction: transaction)
     envelope.envelope_source_templates.create!(source_template: template_a, position: 0)
 
     Envelopes::Merge.call(envelope:, author:)
@@ -1917,7 +1927,7 @@ RSpec.describe 'Envelope Build - Role Resolution' do
   let!(:user) { create(:user, account:) }
   let!(:transaction) { create(:transaction, account:) }
   let!(:buyer_role) { create(:role, account:, name: 'Buyer') }
-  let!(:buyer_party) { create(:transaction_party, transaction:, role: buyer_role, first_name: 'Jane', last_name: 'Doe') }
+  let!(:buyer_party) { create(:transaction_party, parent_transaction: transaction, role: buyer_role, first_name: 'Jane', last_name: 'Doe') }
 
   before { sign_in(user) }
 
@@ -1926,7 +1936,7 @@ RSpec.describe 'Envelope Build - Role Resolution' do
     template.submitters.each_with_index { |s, i| s['name'] = role_names[i] }
     template.save!
 
-    envelope = create(:envelope, transaction:, name: 'Test Envelope')
+    envelope = create(:envelope, parent_transaction: transaction, name: 'Test Envelope')
     envelope.envelope_source_templates.create!(source_template: template, position: 0)
     envelope
   end
@@ -1969,7 +1979,7 @@ RSpec.describe 'Envelope Build - Role Resolution' do
     template = create(:template, account:, author: user, submitter_count: 0)
     template.submitters = []
     template.save!
-    envelope = create(:envelope, transaction:, name: 'No Roles Envelope')
+    envelope = create(:envelope, parent_transaction: transaction, name: 'No Roles Envelope')
     envelope.envelope_source_templates.create!(source_template: template, position: 0)
 
     visit transaction_envelope_roles_path(transaction, envelope)
@@ -2120,7 +2130,7 @@ RSpec.describe Envelopes::PrefillValues do
   let(:role) { create(:role, account:, name: 'Buyer') }
 
   it 'maps an individual party contact info to matching field names' do
-    party = create(:transaction_party, transaction:, role:, first_name: 'Jane', last_name: 'Doe',
+    party = create(:transaction_party, parent_transaction: transaction, role:, first_name: 'Jane', last_name: 'Doe',
                                        email: 'jane@example.com', phone: '555-1234',
                                        address_street: '1 Main St', address_city: 'Springfield',
                                        address_state: 'IL', address_zip: '62704')
@@ -2136,7 +2146,7 @@ RSpec.describe Envelopes::PrefillValues do
   end
 
   it 'maps a business party contact info, including company and signer title' do
-    party = create(:transaction_party, :business, transaction:, role:, email: 'jane@acme.com')
+    party = create(:transaction_party, :business, parent_transaction: transaction, role:, email: 'jane@acme.com')
 
     values = Envelopes::PrefillValues.call(party:, field_names: %w[Name Email Company Title])
 
@@ -2149,7 +2159,7 @@ RSpec.describe Envelopes::PrefillValues do
   end
 
   it 'omits fields the template does not define' do
-    party = create(:transaction_party, transaction:, role:, first_name: 'Jane', last_name: 'Doe')
+    party = create(:transaction_party, parent_transaction: transaction, role:, first_name: 'Jane', last_name: 'Doe')
 
     values = Envelopes::PrefillValues.call(party:, field_names: %w[Name])
 
@@ -2235,8 +2245,8 @@ RSpec.describe 'Envelope Build - Choose Parties and Send' do
   let!(:transaction) { create(:transaction, account:) }
   let!(:buyer_role) { create(:role, account:, name: 'Buyer') }
   let!(:seller_role) { create(:role, account:, name: 'Seller') }
-  let!(:buyer) { create(:transaction_party, transaction:, role: buyer_role, first_name: 'Jane', last_name: 'Doe', email: 'jane@example.com') }
-  let!(:seller) { create(:transaction_party, transaction:, role: seller_role, first_name: 'Sam', last_name: 'Lee', email: 'sam@example.com') }
+  let!(:buyer) { create(:transaction_party, parent_transaction: transaction, role: buyer_role, first_name: 'Jane', last_name: 'Doe', email: 'jane@example.com') }
+  let!(:seller) { create(:transaction_party, parent_transaction: transaction, role: seller_role, first_name: 'Sam', last_name: 'Lee', email: 'sam@example.com') }
 
   let!(:template) do
     t = create(:template, account:, author: user, submitter_count: 2)
@@ -2247,7 +2257,7 @@ RSpec.describe 'Envelope Build - Choose Parties and Send' do
   end
 
   let!(:envelope) do
-    e = create(:envelope, transaction:, name: 'Move-In Packet')
+    e = create(:envelope, parent_transaction: transaction, name: 'Move-In Packet')
     e.envelope_source_templates.create!(source_template: template, position: 0)
     e
   end
@@ -2456,10 +2466,10 @@ RSpec.describe 'Transaction Envelope Tracking' do
   before { sign_in(user) }
 
   it 'lists draft and sent envelopes with status and a link to the submission when sent' do
-    draft_envelope = create(:envelope, transaction:, name: 'Draft Packet')
+    draft_envelope = create(:envelope, parent_transaction: transaction, name: 'Draft Packet')
     template = create(:template, account:, author: user)
     submission = create(:submission, template:, account:, created_by_user: user)
-    sent_envelope = create(:envelope, transaction:, name: 'Sent Packet', status: :sent,
+    sent_envelope = create(:envelope, parent_transaction: transaction, name: 'Sent Packet', status: :sent,
                                       template:, submission:)
 
     visit transaction_path(transaction)
@@ -2557,7 +2567,7 @@ RSpec.describe 'Voiding a Sent Envelope' do
   let!(:template) { create(:template, account:, author: user) }
   let!(:submission) { create(:submission, template:, account:, created_by_user: user) }
   let!(:envelope) do
-    create(:envelope, transaction:, name: 'Move-In Packet', status: :sent, template:, submission:)
+    create(:envelope, parent_transaction: transaction, name: 'Move-In Packet', status: :sent, template:, submission:)
   end
 
   before { sign_in(user) }
@@ -2569,7 +2579,7 @@ RSpec.describe 'Voiding a Sent Envelope' do
   end
 
   it 'does not show a Void button for a draft envelope' do
-    create(:envelope, transaction:, name: 'Draft Packet')
+    create(:envelope, parent_transaction: transaction, name: 'Draft Packet')
 
     visit transaction_path(transaction)
 
@@ -2641,7 +2651,7 @@ end
 
 - [ ] **Step 5: Add the ability rule check**
 
-`EnvelopeVoidController` relies on the existing `can :manage, Envelope, transaction: { account_id: user.account_id }` rule from Task 7 — no new ability rule needed since `load_and_authorize_resource :envelope` defaults to authorizing the controller's action name (`:create`) against that same rule.
+`EnvelopeVoidController` relies on the existing `can :manage, Envelope, parent_transaction: { account_id: user.account_id }` rule from Task 7 — no new ability rule needed since `load_and_authorize_resource :envelope` defaults to authorizing the controller's action name (`:create`) against that same rule.
 
 - [ ] **Step 6: Render the Void button**
 
