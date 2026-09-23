@@ -61,8 +61,7 @@ RSpec.describe 'Roles Settings' do
     end.to change(Role, :count).by(-1)
   end
 
-  it 'shows an error instead of deleting a role still in use',
-     skip: 'enabled once Transaction/TransactionParty exist (Tasks 3, 6)' do
+  it 'shows an error instead of deleting a role still in use' do
     role = create(:role, account:, name: 'Buyer')
     transaction = create(:transaction, account:)
     create(:transaction_party, transaction:, role:)

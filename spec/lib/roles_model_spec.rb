@@ -30,8 +30,7 @@ RSpec.describe Role do
     expect(role).to be_valid
   end
 
-  it 'prevents destroying a role still referenced by a transaction party',
-     skip: 'enabled in Task 6 once TransactionParty exists' do
+  it 'prevents destroying a role still referenced by a transaction party' do
     role = create(:role, account:)
     create(:transaction_party, role:)
 

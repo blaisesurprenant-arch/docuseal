@@ -12,6 +12,7 @@ class Ability
     can :manage, TemplateFolder, account_id: user.account_id
     can :manage, Role, account_id: user.account_id
     can :manage, Transaction, account_id: user.account_id
+    can :manage, TransactionParty, transaction: { account_id: user.account_id }
     can :manage, TemplateSharing, template: { account_id: user.account_id }
     can :manage, Submission, account_id: user.account_id
     can :manage, Submitter, account_id: user.account_id

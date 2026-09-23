@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_23_000002) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_000003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_catalog.plpgsql"
@@ -505,6 +505,32 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_000002) do
     t.index ["slug"], name: "index_templates_on_slug", unique: true
   end
 
+  create_table "transaction_parties", force: :cascade do |t|
+    t.string "address_city"
+    t.string "address_state"
+    t.string "address_street"
+    t.string "address_zip"
+    t.string "company_name"
+    t.datetime "created_at", null: false
+    t.string "email"
+    t.string "first_name"
+    t.string "last_name"
+    t.string "mailing_address_city"
+    t.string "mailing_address_state"
+    t.string "mailing_address_street"
+    t.string "mailing_address_zip"
+    t.integer "party_type", default: 0, null: false
+    t.string "phone"
+    t.bigint "role_id", null: false
+    t.string "signer_first_name"
+    t.string "signer_last_name"
+    t.string "signer_title"
+    t.bigint "transaction_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["role_id"], name: "index_transaction_parties_on_role_id"
+    t.index ["transaction_id"], name: "index_transaction_parties_on_transaction_id"
+  end
+
   create_table "transactions", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.datetime "created_at", null: false
@@ -641,6 +667,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_000002) do
   add_foreign_key "templates", "accounts"
   add_foreign_key "templates", "template_folders", column: "folder_id"
   add_foreign_key "templates", "users", column: "author_id"
+  add_foreign_key "transaction_parties", "roles"
+  add_foreign_key "transaction_parties", "transactions"
   add_foreign_key "transactions", "accounts"
   add_foreign_key "transactions", "users", column: "created_by_user_id"
   add_foreign_key "user_configs", "users"

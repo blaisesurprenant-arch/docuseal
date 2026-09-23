@@ -1,0 +1,35 @@
+# frozen_string_literal: true
+
+class TransactionParty < ApplicationRecord
+  belongs_to :txn_record, class_name: 'Transaction', foreign_key: 'transaction_id', inverse_of: :transaction_parties
+  belongs_to :role
+
+  has_many :envelope_parts, dependent: :destroy
+  has_many :envelopes, through: :envelope_parts
+
+  # Delegate to txn_record for interface compatibility
+  def transaction
+    txn_record
+  end
+
+  def transaction=(value)
+    self.txn_record = value
+  end
+
+  enum :party_type, { individual: 0, business: 1 }
+
+  validates :first_name, :last_name, presence: true, if: :individual?
+  validates :company_name, :signer_first_name, :signer_last_name, :signer_title, presence: true, if: :business?
+
+  def display_name
+    if business?
+      "#{company_name} (#{signer_first_name} #{signer_last_name})"
+    else
+      "#{first_name} #{last_name}"
+    end
+  end
+
+  def signer_name
+    business? ? "#{signer_first_name} #{signer_last_name}" : "#{first_name} #{last_name}"
+  end
+end
