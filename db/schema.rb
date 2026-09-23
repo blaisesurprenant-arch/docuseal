@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_23_000003) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_000006) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_catalog.plpgsql"
@@ -255,6 +255,38 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_000003) do
     t.text "value", null: false
     t.index ["user_id", "key"], name: "index_encrypted_user_configs_on_user_id_and_key", unique: true
     t.index ["user_id"], name: "index_encrypted_user_configs_on_user_id"
+  end
+
+  create_table "envelope_parts", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "envelope_id", null: false
+    t.bigint "transaction_party_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["envelope_id"], name: "index_envelope_parts_on_envelope_id"
+    t.index ["transaction_party_id"], name: "index_envelope_parts_on_transaction_party_id"
+  end
+
+  create_table "envelope_source_templates", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "envelope_id", null: false
+    t.integer "position", default: 0, null: false
+    t.bigint "source_template_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["envelope_id"], name: "index_envelope_source_templates_on_envelope_id"
+    t.index ["source_template_id"], name: "index_envelope_source_templates_on_source_template_id"
+  end
+
+  create_table "envelopes", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.integer "status", default: 0, null: false
+    t.bigint "submission_id"
+    t.bigint "template_id"
+    t.bigint "transaction_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["submission_id"], name: "index_envelopes_on_submission_id"
+    t.index ["template_id"], name: "index_envelopes_on_template_id"
+    t.index ["transaction_id"], name: "index_envelopes_on_transaction_id"
   end
 
   create_table "lock_events", force: :cascade do |t|
@@ -643,6 +675,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_000003) do
   add_foreign_key "email_messages", "users", column: "author_id"
   add_foreign_key "encrypted_configs", "accounts"
   add_foreign_key "encrypted_user_configs", "users"
+  add_foreign_key "envelope_parts", "envelopes"
+  add_foreign_key "envelope_parts", "transaction_parties"
+  add_foreign_key "envelope_source_templates", "envelopes"
+  add_foreign_key "envelope_source_templates", "templates", column: "source_template_id"
+  add_foreign_key "envelopes", "submissions"
+  add_foreign_key "envelopes", "templates"
+  add_foreign_key "envelopes", "transactions"
   add_foreign_key "mcp_tokens", "users"
   add_foreign_key "oauth_access_grants", "oauth_applications", column: "application_id"
   add_foreign_key "oauth_access_grants", "users", column: "resource_owner_id"

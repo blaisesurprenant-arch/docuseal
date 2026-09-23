@@ -68,6 +68,8 @@ class Template < ApplicationRecord
            class_name: 'ActiveStorage::Attachment', dependent: :destroy, as: :record, inverse_of: :record
 
   has_many :submissions, dependent: :destroy
+  has_many :envelope_source_templates, foreign_key: :source_template_id, inverse_of: :source_template,
+                                       dependent: :destroy
   has_many :template_sharings, dependent: :destroy
   has_many :template_accesses, dependent: :destroy
   has_many :template_versions, dependent: :destroy
