@@ -3,7 +3,9 @@
 class TransactionsController < ApplicationController
   load_and_authorize_resource :transaction
 
-  def show; end
+  def show
+    @envelopes = @transaction.envelopes.order(created_at: :desc)
+  end
 
   def new; end
 

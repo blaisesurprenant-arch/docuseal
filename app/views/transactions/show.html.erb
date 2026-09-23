@@ -14,3 +14,13 @@
 
 <h2 class="text-xl font-bold mt-6 mb-2">Envelopes</h2>
 <%= link_to 'New Envelope', new_transaction_envelope_path(@transaction), class: 'btn btn-neutral btn-sm mb-2' %>
+<div class="space-y-2">
+  <% @envelopes.each do |envelope| %>
+    <div class="base-input flex justify-between items-center">
+      <span><%= envelope.name %> — <%= envelope.status %></span>
+      <% if envelope.submission.present? %>
+        <%= link_to 'View Submission', submission_path(envelope.submission) %>
+      <% end %>
+    </div>
+  <% end %>
+</div>
