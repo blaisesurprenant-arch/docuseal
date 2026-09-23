@@ -19,6 +19,9 @@
     <div class="base-input flex justify-between items-center" data-envelope-name="<%= envelope.name %>">
       <span><%= envelope.name %> — <%= envelope.status %></span>
       <div class="flex items-center gap-2">
+        <% if envelope.draft? %>
+          <%= link_to 'Edit', edit_transaction_envelope_path(@transaction, envelope) %>
+        <% end %>
         <% if envelope.submission.present? %>
           <%= link_to 'View Submission', submission_path(envelope.submission) %>
         <% end %>

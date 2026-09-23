@@ -32,10 +32,9 @@ RSpec.describe 'Envelope Build - Choose Parties and Send' do
   end
 
   it 'sends the envelope to the checked parties, creating a merged template and submission' do
-    visit transaction_envelope_send_path(transaction, envelope)
-    uncheck "party_ids_#{seller.id}"
-
     expect do
+      visit transaction_envelope_send_path(transaction, envelope)
+      uncheck "party_ids_#{seller.id}"
       click_button 'Send'
     end.to change(Submission, :count).by(1).and change(Template, :count).by(1)
 

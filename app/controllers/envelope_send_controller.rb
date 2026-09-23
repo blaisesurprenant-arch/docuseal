@@ -5,6 +5,7 @@ class EnvelopeSendController < ApplicationController
   load_and_authorize_resource :envelope, through: :transaction
 
   def show
+    ensure_merged_template
     load_candidate_parties
   end
 
@@ -18,11 +19,10 @@ class EnvelopeSendController < ApplicationController
     end
 
     parties = TransactionParty.where(id: party_ids)
+    merged_template = ensure_merged_template
 
     ActiveRecord::Base.transaction do
       parties.each { |party| @envelope.envelope_parts.create!(transaction_party: party) }
-
-      merged_template = Envelopes::Merge.call(envelope: @envelope, author: current_user)
 
       submission = Submission.create!(
         account: current_account,
@@ -33,13 +33,28 @@ class EnvelopeSendController < ApplicationController
 
       build_submitters(submission, merged_template, parties)
 
-      @envelope.update!(template: merged_template, submission:, status: :sent)
+      @envelope.update!(submission:, status: :sent)
     end
 
     redirect_to transaction_envelope_path(@transaction, @envelope), notice: 'Envelope has been sent.'
   end
 
   private
+
+  # Merges lazily on first visit so the resulting Template is a real, saved
+  # record the user can jump into the standalone template editor and adjust
+  # (field placement, etc.) before actually sending. Reused on later visits
+  # and at send time rather than re-merged, so edits made in the template
+  # editor survive. EnvelopesController#update clears envelope.template
+  # when the source document set changes, which is what makes this
+  # re-merge on the next visit.
+  def ensure_merged_template
+    return @envelope.template if @envelope.template.present?
+
+    merged_template = Envelopes::Merge.call(envelope: @envelope, author: current_user)
+    @envelope.update!(template: merged_template)
+    merged_template
+  end
 
   def build_submitters(submission, merged_template, parties)
     merged_template.submitters.each do |template_submitter|

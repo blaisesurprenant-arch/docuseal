@@ -1,0 +1,19 @@
+<%= form_for [@transaction, envelope] do |f| %>
+  <div class="form-control mb-4">
+    <%= f.label :name, 'Envelope Name' %>
+    <%= f.text_field :name, class: 'base-input', placeholder: 'e.g. Move-In Packet' %>
+  </div>
+
+  <h2 class="font-bold mb-2">Select Templates</h2>
+  <div class="space-y-2 mb-4">
+    <% templates.each do |template| %>
+      <label class="flex items-center gap-2">
+        <%= check_box_tag 'template_ids[]', template.id, selected_template_ids.include?(template.id),
+                           id: "template_ids_#{template.id}" %>
+        <%= template.name %>
+      </label>
+    <% end %>
+  </div>
+
+  <%= f.submit submit_label, class: 'btn btn-neutral' %>
+<% end %>

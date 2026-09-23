@@ -99,7 +99,7 @@ Rails.application.routes.draw do
   resources :transactions, only: %i[index], controller: 'transactions_dashboard'
   resources :transactions, only: %i[new create edit update show destroy] do
     resources :transaction_parties, only: %i[new create edit update destroy]
-    resources :envelopes, only: %i[new create show] do
+    resources :envelopes, only: %i[new create show edit update] do
       resource :roles, only: %i[show], controller: 'envelope_roles'
       resource :send, only: %i[show create], controller: 'envelope_send'
       resource :void, only: %i[create], controller: 'envelope_void'

@@ -1,5 +1,9 @@
 <h1 class="text-2xl font-bold mb-4">Choose Parties for <%= @envelope.name %></h1>
 
+<p class="mb-4">
+  <%= link_to 'Edit Document', edit_template_path(@envelope.template), class: 'btn btn-outline btn-sm' %>
+</p>
+
 <%= form_for :envelope, url: transaction_envelope_send_path(@transaction, @envelope), method: :post do %>
   <div class="space-y-2 mb-4">
     <% @candidate_parties.each do |party| %>
