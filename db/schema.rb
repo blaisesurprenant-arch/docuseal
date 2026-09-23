@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_19_091500) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_catalog.plpgsql"
@@ -322,6 +322,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_091500) do
     t.index ["uid"], name: "index_oauth_applications_on_uid", unique: true
   end
 
+  create_table "roles", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id", "name"], name: "index_roles_on_account_id_and_name", unique: true
+    t.index ["account_id"], name: "index_roles_on_account_id"
+  end
+
   create_table "search_entries", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.datetime "created_at", null: false
@@ -602,6 +611,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_091500) do
   add_foreign_key "oauth_access_grants", "users", column: "resource_owner_id"
   add_foreign_key "oauth_access_tokens", "oauth_applications", column: "application_id"
   add_foreign_key "oauth_access_tokens", "users", column: "resource_owner_id"
+  add_foreign_key "roles", "accounts"
   add_foreign_key "submission_events", "accounts"
   add_foreign_key "submission_events", "submissions"
   add_foreign_key "submission_events", "submitters"
