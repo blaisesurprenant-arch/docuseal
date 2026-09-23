@@ -16,11 +16,17 @@
 <%= link_to 'New Envelope', new_transaction_envelope_path(@transaction), class: 'btn btn-neutral btn-sm mb-2' %>
 <div class="space-y-2">
   <% @envelopes.each do |envelope| %>
-    <div class="base-input flex justify-between items-center">
+    <div class="base-input flex justify-between items-center" data-envelope-name="<%= envelope.name %>">
       <span><%= envelope.name %> — <%= envelope.status %></span>
-      <% if envelope.submission.present? %>
-        <%= link_to 'View Submission', submission_path(envelope.submission) %>
-      <% end %>
+      <div class="flex items-center gap-2">
+        <% if envelope.submission.present? %>
+          <%= link_to 'View Submission', submission_path(envelope.submission) %>
+        <% end %>
+        <% if envelope.sent? %>
+          <%= button_to 'Void', transaction_envelope_void_path(@transaction, envelope), method: :post,
+                         data: { turbo_confirm: 'Are you sure?' }, class: 'btn btn-outline btn-sm' %>
+        <% end %>
+      </div>
     </div>
   <% end %>
 </div>

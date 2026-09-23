@@ -102,6 +102,7 @@ Rails.application.routes.draw do
     resources :envelopes, only: %i[new create show] do
       resource :roles, only: %i[show], controller: 'envelope_roles'
       resource :send, only: %i[show create], controller: 'envelope_send'
+      resource :void, only: %i[create], controller: 'envelope_void'
     end
   end
   resources :templates, only: %i[new create edit update show destroy] do
