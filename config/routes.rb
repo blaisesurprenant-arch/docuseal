@@ -99,6 +99,7 @@ Rails.application.routes.draw do
   resources :transactions, only: %i[index], controller: 'transactions_dashboard'
   resources :transactions, only: %i[new create edit update show destroy] do
     resources :transaction_parties, only: %i[new create edit update destroy]
+    resources :envelopes, only: %i[new create show]
   end
   resources :templates, only: %i[new create edit update show destroy] do
     resources :clone, only: %i[new create], controller: 'templates_clone'
