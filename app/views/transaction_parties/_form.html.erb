@@ -1,0 +1,49 @@
+<%= form_for [transaction, transaction_party] do |f| %>
+  <div class="form-control mb-4">
+    <%= f.label :role_id, 'Role' %>
+    <toggle-attribute data-target-id="new_role_wrapper" data-class-name="hidden" data-value="<%= TransactionPartiesController::NEW_ROLE_OPTION %>">
+      <select name="transaction_party[role_id]" class="base-select mt-1">
+        <%= options_for_select(transaction.account.roles.order(:name).pluck(:name, :id), transaction_party.role_id) %>
+        <option value="<%= TransactionPartiesController::NEW_ROLE_OPTION %>">+ Add new role...</option>
+      </select>
+    </toggle-attribute>
+    <div id="new_role_wrapper" class="hidden mt-2">
+      <%= text_field_tag :new_role_name, nil, id: 'new_role_name', class: 'base-input', placeholder: 'New role name' %>
+    </div>
+  </div>
+
+  <div class="form-control mb-4">
+    <%= f.label :party_type, 'Party Type' %>
+    <toggle-attribute data-target-id="business_fields" data-class-name="hidden" data-value="business">
+      <%= f.select :party_type, [['Individual', 'individual'], ['Business', 'business']], {}, class: 'base-select' %>
+    </toggle-attribute>
+  </div>
+
+  <div id="individual_fields" class="<%= 'hidden' if transaction_party.business? %>">
+    <div class="form-control mb-2"><%= f.label :first_name %> <%= f.text_field :first_name, class: 'base-input' %></div>
+    <div class="form-control mb-2"><%= f.label :last_name %> <%= f.text_field :last_name, class: 'base-input' %></div>
+  </div>
+
+  <div id="business_fields" class="<%= 'hidden' unless transaction_party.business? %>">
+    <div class="form-control mb-2"><%= f.label :company_name %> <%= f.text_field :company_name, class: 'base-input' %></div>
+    <div class="form-control mb-2"><%= f.label :signer_first_name, 'Signer First Name' %> <%= f.text_field :signer_first_name, class: 'base-input' %></div>
+    <div class="form-control mb-2"><%= f.label :signer_last_name, 'Signer Last Name' %> <%= f.text_field :signer_last_name, class: 'base-input' %></div>
+    <div class="form-control mb-2"><%= f.label :signer_title, 'Signer Title' %> <%= f.text_field :signer_title, class: 'base-input' %></div>
+  </div>
+
+  <div class="form-control mb-2"><%= f.label :email %> <%= f.text_field :email, class: 'base-input' %></div>
+  <div class="form-control mb-2"><%= f.label :phone %> <%= f.text_field :phone, class: 'base-input' %></div>
+
+  <div class="form-control mb-2"><%= f.label :address_street, 'Address' %> <%= f.text_field :address_street, class: 'base-input mb-1' %></div>
+  <div class="grid grid-cols-3 gap-2 mb-4">
+    <%= f.text_field :address_city, class: 'base-input', placeholder: 'City' %>
+    <%= f.text_field :address_state, class: 'base-input', placeholder: 'State' %>
+    <%= f.text_field :address_zip, class: 'base-input', placeholder: 'ZIP' %>
+  </div>
+
+  <% if transaction_party.errors.any? %>
+    <div class="text-error mb-4"><%= transaction_party.errors.full_messages.to_sentence %></div>
+  <% end %>
+
+  <%= f.submit transaction_party.new_record? ? 'Add Party' : 'Save', class: 'btn btn-neutral' %>
+<% end %>

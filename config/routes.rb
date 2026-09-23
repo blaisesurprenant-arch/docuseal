@@ -97,7 +97,9 @@ Rails.application.routes.draw do
   resources :templates, only: %i[index], controller: 'templates_dashboard'
   resources :submissions_filters, only: %i[show], param: 'name'
   resources :transactions, only: %i[index], controller: 'transactions_dashboard'
-  resources :transactions, only: %i[new create edit update show destroy]
+  resources :transactions, only: %i[new create edit update show destroy] do
+    resources :transaction_parties, only: %i[new create edit update destroy]
+  end
   resources :templates, only: %i[new create edit update show destroy] do
     resources :clone, only: %i[new create], controller: 'templates_clone'
     resource :debug, only: %i[show], controller: 'templates_debug' if Rails.env.development?
