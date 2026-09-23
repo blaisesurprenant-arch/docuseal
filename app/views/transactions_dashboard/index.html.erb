@@ -1,0 +1,13 @@
+<div class="flex justify-between items-center mb-4">
+  <div class="flex items-center">
+    <div class="mr-2"><%= render 'dashboard/toggle_view', selected: 'transactions' %></div>
+    <h1 class="text-2xl md:text-3xl font-bold">Transactions</h1>
+  </div>
+  <%= link_to 'New Transaction', new_transaction_path, class: 'btn btn-neutral btn-sm' %>
+</div>
+
+<div class="space-y-2">
+  <% @transactions.each do |transaction| %>
+    <%= link_to transaction.name, transaction_path(transaction), class: 'block base-input' %>
+  <% end %>
+</div>

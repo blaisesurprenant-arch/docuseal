@@ -9,4 +9,9 @@
       <%= svg_icon('layout_list', class: 'w-6 h-6 stroke-2') %>
     </button>
   </toggle-cookies>
+  <toggle-cookies data-value="transactions" data-key="dashboard_view" class="tooltip tooltip-top tooltip-no-touch" data-tip="Transactions">
+    <button class="<%= local_assigns[:selected] == 'transactions' ? 'btn btn-neutral !rounded-lg btn-square !p-0 hover:text-neutral-300 !btn-sm !h-8 !w-9' : 'btn !border !rounded-lg btn-square !p-0 !btn-sm !h-8 !w-9 disabled:btn-neutral' %>">
+      <%= svg_icon('building', class: 'w-6 h-6 stroke-2') %>
+    </button>
+  </toggle-cookies>
 </form>

@@ -1,0 +1,7 @@
+<%= form_for transaction do |f| %>
+  <div class="form-control mb-4">
+    <%= f.label :name, 'Transaction Name' %>
+    <%= f.text_field :name, class: 'base-input', placeholder: 'e.g. 123 E Main St Unit A' %>
+  </div>
+  <%= f.submit transaction.new_record? ? 'Create Transaction' : 'Save', class: 'btn btn-neutral' %>
+<% end %>
