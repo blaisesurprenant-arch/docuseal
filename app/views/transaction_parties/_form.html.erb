@@ -1,4 +1,8 @@
 <%= form_for [transaction, transaction_party] do |f| %>
+  <% if params[:return_to].present? %>
+    <input type="hidden" name="return_to" value="<%= params[:return_to] %>">
+  <% end %>
+
   <div class="form-control mb-4">
     <%= f.label :role_id, 'Role' %>
     <toggle-attribute data-target-id="new_role_wrapper" data-class-name="hidden" data-value="<%= TransactionPartiesController::NEW_ROLE_OPTION %>">

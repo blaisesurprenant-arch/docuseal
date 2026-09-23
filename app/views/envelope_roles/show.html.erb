@@ -1,0 +1,21 @@
+<h1 class="text-2xl font-bold mb-4">Assign Roles for <%= @envelope.name %></h1>
+
+<% if @unresolved_role_names.empty? %>
+  <p class="text-success mb-4">All roles resolved.</p>
+  <%= link_to 'Next: Choose Parties', '#', class: 'btn btn-neutral' %>
+<% else %>
+  <p class="mb-4">These templates use roles that don't have a matching party on this transaction yet:</p>
+  <div class="space-y-2">
+    <% @unresolved_role_names.each do |role_name| %>
+      <% role = @unresolved_roles[role_name] %>
+      <div class="base-input flex justify-between items-center">
+        <span class="font-bold"><%= role_name %></span>
+        <%= button_to 'Add Party for This Role',
+                       new_transaction_transaction_party_path(@transaction),
+                       method: :get,
+                       params: { role_id: role.id, return_to: transaction_envelope_roles_path(@transaction, @envelope) },
+                       class: 'btn btn-neutral btn-sm' %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

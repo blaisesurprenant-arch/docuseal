@@ -6,7 +6,9 @@ class TransactionPartiesController < ApplicationController
 
   NEW_ROLE_OPTION = 'new'
 
-  def new; end
+  def new
+    @transaction_party.role_id = params[:role_id] if params[:role_id].present?
+  end
 
   def edit; end
 
@@ -14,7 +16,7 @@ class TransactionPartiesController < ApplicationController
     assign_role
 
     if @transaction_party.save
-      redirect_to transaction_path(@transaction), notice: 'Party has been added.'
+      redirect_to safe_return_to || transaction_path(@transaction), notice: 'Party has been added.'
     else
       render :new, status: :unprocessable_content
     end
@@ -37,6 +39,15 @@ class TransactionPartiesController < ApplicationController
   end
 
   private
+
+  # Only accept a same-origin relative path (starts with a single "/", not
+  # "//" which the browser resolves as protocol-relative to another host) —
+  # params[:return_to] is otherwise a straightforward open-redirect vector.
+  def safe_return_to
+    candidate = params[:return_to].to_s
+
+    candidate if candidate.start_with?('/') && !candidate.start_with?('//')
+  end
 
   def assign_role
     if transaction_party_params[:role_id] == NEW_ROLE_OPTION

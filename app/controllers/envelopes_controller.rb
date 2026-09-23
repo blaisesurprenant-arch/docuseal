@@ -29,7 +29,7 @@ class EnvelopesController < ApplicationController
       end
     end
 
-    redirect_to transaction_path(@transaction)
+    redirect_to transaction_envelope_roles_path(@transaction, @envelope)
   end
 
   private
