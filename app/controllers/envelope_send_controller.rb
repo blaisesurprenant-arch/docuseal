@@ -20,15 +20,18 @@ class EnvelopeSendController < ApplicationController
 
     parties = TransactionParty.where(id: party_ids)
     merged_template = ensure_merged_template
+    signing_order = params.dig(:envelope, :signing_order)
+    @envelope.signing_order = signing_order if Envelope.signing_orders.key?(signing_order)
 
     ActiveRecord::Base.transaction do
+      @envelope.save!
       parties.each { |party| @envelope.envelope_parts.create!(transaction_party: party) }
 
       submission = Submission.create!(
         account: current_account,
         template: merged_template,
         created_by_user: current_user,
-        submitters_order: 'preserved'
+        submitters_order: @envelope.signing_order_parallel? ? 'random' : 'preserved'
       )
 
       build_submitters(submission, merged_template, parties)

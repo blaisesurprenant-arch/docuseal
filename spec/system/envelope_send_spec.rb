@@ -46,6 +46,26 @@ RSpec.describe 'Envelope Build - Choose Parties and Send' do
     expect(envelope.submission.submitters.first.email).to eq('jane@example.com')
   end
 
+  it 'defaults to sequential signing order' do
+    expect do
+      visit transaction_envelope_send_path(transaction, envelope)
+      click_button 'Send'
+    end.to change(Submission, :count).by(1)
+
+    expect(envelope.reload.submission.submitters_order).to eq('preserved')
+  end
+
+  it 'sends in parallel when parallel signing order is chosen' do
+    expect do
+      visit transaction_envelope_send_path(transaction, envelope)
+      choose 'Parallel'
+      click_button 'Send'
+    end.to change(Submission, :count).by(1)
+
+    expect(envelope.reload.submission.submitters_order).to eq('random')
+    expect(envelope).to be_signing_order_parallel
+  end
+
   it 'blocks sending with zero parties included' do
     visit transaction_envelope_send_path(transaction, envelope)
     uncheck "party_ids_#{buyer.id}"

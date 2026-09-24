@@ -16,6 +16,7 @@ class Envelope < ApplicationRecord
   has_many :transaction_parties, through: :envelope_parts
 
   enum :status, { draft: 0, sent: 1, completed: 2, voided: 3, declined: 4, expired: 5 }
+  enum :signing_order, { sequential: 0, parallel: 1 }, prefix: :signing_order
 
   validates :name, presence: true
 
