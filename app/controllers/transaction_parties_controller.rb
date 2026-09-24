@@ -26,6 +26,8 @@ class TransactionPartiesController < ApplicationController
     assign_role
 
     if @transaction_party.update(transaction_party_params.except(:role_id))
+      sync_live_submitters
+
       redirect_to transaction_path(@transaction), notice: 'Party has been updated.'
     else
       render :edit, status: :unprocessable_content
@@ -39,6 +41,20 @@ class TransactionPartiesController < ApplicationController
   end
 
   private
+
+  # Keeps an already-sent envelope's real Submitter (snapshotted at send
+  # time) in sync with a later correction to the party's contact info --
+  # otherwise editing a typo'd email post-send silently has no effect.
+  # Never touches a submitter that has already completed signing.
+  def sync_live_submitters
+    @transaction_party.envelope_parts.includes(:submitter).each do |envelope_part|
+      submitter = envelope_part.submitter
+
+      next if submitter.blank? || submitter.completed_at?
+
+      submitter.update!(email: @transaction_party.email, name: @transaction_party.signer_name)
+    end
+  end
 
   # Only accept a same-origin relative path (starts with a single "/", not
   # "//" which the browser resolves as protocol-relative to another host) —

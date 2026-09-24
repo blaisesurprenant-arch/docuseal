@@ -72,13 +72,15 @@ class EnvelopeSendController < ApplicationController
       field_names = merged_template.fields.select { |f| f['submitter_uuid'] == template_submitter['uuid'] }
                                    .filter_map { |f| f['name'] }
 
-      submission.submitters.create!(
+      submitter = submission.submitters.create!(
         account: current_account,
         uuid: template_submitter['uuid'],
         email: party.email,
         name: party.signer_name,
         values: Envelopes::PrefillValues.call(party:, field_names:)
       )
+
+      @envelope.envelope_parts.find_by(transaction_party: party)&.update!(submitter:)
     end
   end
 

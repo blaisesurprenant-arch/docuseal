@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_23_000009) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_000010) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_catalog.plpgsql"
@@ -260,9 +260,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_000009) do
   create_table "envelope_parts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "envelope_id", null: false
+    t.bigint "submitter_id"
     t.bigint "transaction_party_id", null: false
     t.datetime "updated_at", null: false
     t.index ["envelope_id"], name: "index_envelope_parts_on_envelope_id"
+    t.index ["submitter_id"], name: "index_envelope_parts_on_submitter_id"
     t.index ["transaction_party_id"], name: "index_envelope_parts_on_transaction_party_id"
   end
 
@@ -679,6 +681,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_000009) do
   add_foreign_key "encrypted_configs", "accounts"
   add_foreign_key "encrypted_user_configs", "users"
   add_foreign_key "envelope_parts", "envelopes"
+  add_foreign_key "envelope_parts", "submitters"
   add_foreign_key "envelope_parts", "transaction_parties"
   add_foreign_key "envelope_source_templates", "envelopes"
   add_foreign_key "envelope_source_templates", "templates", column: "source_template_id"

@@ -71,4 +71,49 @@ RSpec.describe 'Transaction Parties' do
 
     expect(party.reload.last_name).to eq('Smith')
   end
+
+  it 'propagates an edited email to the linked (still-pending) submitter of a sent envelope' do
+    role = create(:role, account:, name: 'Buyer')
+    party = create(:transaction_party, parent_transaction: transaction, role:, first_name: 'Jane', last_name: 'Doe',
+                                       email: 'jane@example.com')
+    template = create(:template, account:, author: user, submitter_count: 1)
+    template.submitters[0]['name'] = 'Buyer'
+    template.save!
+    envelope = create(:envelope, parent_transaction: transaction, name: 'Move-In Packet')
+    envelope.envelope_source_templates.create!(source_template: template, position: 0)
+
+    visit transaction_envelope_send_path(transaction, envelope)
+    click_button 'Send'
+
+    submitter = envelope.reload.envelope_parts.find_by(transaction_party: party).submitter
+
+    visit edit_transaction_transaction_party_path(transaction, party)
+    fill_in 'transaction_party[email]', with: 'jane.doe@newdomain.com'
+    click_button 'Save'
+
+    expect(submitter.reload.email).to eq('jane.doe@newdomain.com')
+  end
+
+  it 'does not overwrite a submitter that has already completed signing' do
+    role = create(:role, account:, name: 'Buyer')
+    party = create(:transaction_party, parent_transaction: transaction, role:, first_name: 'Jane', last_name: 'Doe',
+                                       email: 'jane@example.com')
+    template = create(:template, account:, author: user, submitter_count: 1)
+    template.submitters[0]['name'] = 'Buyer'
+    template.save!
+    envelope = create(:envelope, parent_transaction: transaction, name: 'Move-In Packet')
+    envelope.envelope_source_templates.create!(source_template: template, position: 0)
+
+    visit transaction_envelope_send_path(transaction, envelope)
+    click_button 'Send'
+
+    submitter = envelope.reload.envelope_parts.find_by(transaction_party: party).submitter
+    submitter.update!(completed_at: Time.current)
+
+    visit edit_transaction_transaction_party_path(transaction, party)
+    fill_in 'transaction_party[email]', with: 'jane.doe@newdomain.com'
+    click_button 'Save'
+
+    expect(submitter.reload.email).to eq('jane@example.com')
+  end
 end
