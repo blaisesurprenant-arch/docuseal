@@ -26,8 +26,7 @@
           <%= link_to 'View Submission', submission_path(envelope.submission) %>
         <% end %>
         <% if envelope.sent? %>
-          <%= button_to 'Void', transaction_envelope_void_path(@transaction, envelope), method: :post,
-                         data: { turbo_confirm: 'Are you sure?' }, class: 'btn btn-outline btn-sm' %>
+          <%= link_to 'Void', new_transaction_envelope_void_path(@transaction, envelope), class: 'btn btn-outline btn-sm' %>
         <% end %>
       </div>
     </div>

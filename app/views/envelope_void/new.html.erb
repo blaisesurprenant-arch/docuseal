@@ -1,0 +1,14 @@
+<h1 class="text-2xl font-bold mb-4">Void <%= @envelope.name %></h1>
+
+<%= form_for :envelope, url: transaction_envelope_void_path(@transaction, @envelope), method: :post do %>
+  <div class="form-control mb-4">
+    <%= label_tag 'envelope_void_reason', 'Reason' %>
+    <%= text_area_tag 'envelope[void_reason]', nil, id: 'envelope_void_reason', class: 'base-input' %>
+  </div>
+
+  <% if flash[:alert] %>
+    <div class="text-error mb-4"><%= flash[:alert] %></div>
+  <% end %>
+
+  <%= submit_tag 'Void Envelope', class: 'btn btn-outline' %>
+<% end %>

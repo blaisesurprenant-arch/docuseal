@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_23_000008) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_000009) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gin"
   enable_extension "pg_catalog.plpgsql"
@@ -285,6 +285,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_23_000008) do
     t.bigint "template_id"
     t.bigint "transaction_id", null: false
     t.datetime "updated_at", null: false
+    t.text "void_reason"
     t.index ["submission_id"], name: "index_envelopes_on_submission_id"
     t.index ["template_id"], name: "index_envelopes_on_template_id"
     t.index ["transaction_id"], name: "index_envelopes_on_transaction_id"

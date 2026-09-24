@@ -12,29 +12,40 @@ RSpec.describe 'Voiding a Sent Envelope' do
 
   before { sign_in(user) }
 
-  it 'shows a Void button only for sent envelopes' do
+  it 'shows a Void link only for sent envelopes' do
     visit transaction_path(transaction)
 
-    expect(page).to have_button('Void')
+    expect(page).to have_link('Void')
   end
 
-  it 'does not show a Void button for a draft envelope' do
+  it 'does not show a Void link for a draft envelope' do
     create(:envelope, parent_transaction: transaction, name: 'Draft Packet')
 
     visit transaction_path(transaction)
 
     within("[data-envelope-name='Draft Packet']") do
-      expect(page).not_to have_button('Void')
+      expect(page).not_to have_link('Void')
     end
   end
 
-  it 'voids the envelope and archives its submission' do
+  it 'requires a reason before voiding' do
     visit transaction_path(transaction)
+    click_link 'Void'
+    click_button 'Void Envelope'
 
-    accept_confirm { click_button 'Void' }
+    expect(page).to have_content('A reason is required')
+    expect(envelope.reload).to be_sent
+  end
+
+  it 'voids the envelope with a reason and archives its submission' do
+    visit transaction_path(transaction)
+    click_link 'Void'
+    fill_in 'envelope[void_reason]', with: 'Buyer backed out of the deal'
+    click_button 'Void Envelope'
 
     expect(page).to have_content('Envelope has been voided.')
     expect(envelope.reload).to be_voided
+    expect(envelope.void_reason).to eq('Buyer backed out of the deal')
     expect(submission.reload.archived_at).to be_present
   end
 end
