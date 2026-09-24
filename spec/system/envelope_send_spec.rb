@@ -98,6 +98,44 @@ RSpec.describe 'Envelope Build - Choose Parties and Send' do
     expect(envelope.reload.submission.expire_at).to be_nil
   end
 
+  it "keys prefilled contact info by the field's uuid, not its name (submitter.values contract)" do
+    email_field_uuid = SecureRandom.uuid
+    template.fields << {
+      'uuid' => email_field_uuid, 'submitter_uuid' => template.submitters[0]['uuid'],
+      'name' => 'Email', 'type' => 'text', 'required' => false, 'areas' => []
+    }
+    template.save!
+
+    visit transaction_envelope_send_path(transaction, envelope)
+    click_button 'Send'
+
+    buyer_submitter = envelope.reload.submission.submitters.find_by(email: 'jane@example.com')
+    merged_field_uuid = envelope.template.fields.find { |f| f['name'] == 'Email' }['uuid']
+
+    expect(buyer_submitter.values[merged_field_uuid]).to eq('jane@example.com')
+  end
+
+  it 'lets the sender fill in prefillable fields for the whole document before sending' do
+    price_field_uuid = SecureRandom.uuid
+    template.fields << {
+      'uuid' => price_field_uuid, 'submitter_uuid' => template.submitters[0]['uuid'],
+      'name' => 'Purchase Price', 'type' => 'text', 'required' => false, 'areas' => [], 'prefillable' => true
+    }
+    template.save!
+
+    visit transaction_envelope_send_path(transaction, envelope)
+
+    expect(page).to have_field('Purchase Price')
+
+    fill_in 'Purchase Price', with: '450000'
+    click_button 'Send'
+
+    buyer_submitter = envelope.reload.submission.submitters.find_by(email: 'jane@example.com')
+    merged_field_uuid = envelope.template.fields.find { |f| f['name'] == 'Purchase Price' }['uuid']
+
+    expect(buyer_submitter.values[merged_field_uuid]).to eq('450000')
+  end
+
   it 'blocks sending with zero parties included' do
     visit transaction_envelope_send_path(transaction, envelope)
     uncheck "party_ids_#{buyer.id}"

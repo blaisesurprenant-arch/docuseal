@@ -14,6 +14,21 @@
     <% end %>
   </div>
 
+  <% if @prefillable_fields.present? %>
+    <div class="form-control mb-4">
+      <p class="font-bold mb-2">Fill In Before Sending</p>
+      <div class="space-y-2">
+        <% @prefillable_fields.each do |field| %>
+          <div>
+            <%= label_tag "envelope_prefill_values_#{field['uuid']}", field['name'] %>
+            <%= text_field_tag "envelope[prefill_values][#{field['uuid']}]", nil,
+                                id: "envelope_prefill_values_#{field['uuid']}", class: 'base-input' %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
   <div class="form-control mb-4">
     <%= label_tag 'envelope_expire_at', 'Expires On (optional)' %>
     <%= date_field_tag 'envelope[expire_at]', nil, id: 'envelope_expire_at', class: 'base-input' %>
