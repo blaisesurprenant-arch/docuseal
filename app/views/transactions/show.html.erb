@@ -16,19 +16,29 @@
 <%= link_to 'New Envelope', new_transaction_envelope_path(@transaction), class: 'btn btn-neutral btn-sm mb-2' %>
 <div class="space-y-2">
   <% @envelopes.each do |envelope| %>
-    <div class="base-input flex justify-between items-center" data-envelope-name="<%= envelope.name %>">
-      <span><%= envelope.name %> — <%= envelope.status %></span>
-      <div class="flex items-center gap-2">
-        <% if envelope.draft? %>
-          <%= link_to 'Edit', edit_transaction_envelope_path(@transaction, envelope) %>
-        <% end %>
-        <% if envelope.submission.present? %>
-          <%= link_to 'View Submission', submission_path(envelope.submission) %>
-        <% end %>
-        <% if envelope.sent? %>
-          <%= link_to 'Void', new_transaction_envelope_void_path(@transaction, envelope), class: 'btn btn-outline btn-sm' %>
-        <% end %>
+    <div class="base-input" data-envelope-name="<%= envelope.name %>">
+      <div class="flex justify-between items-center">
+        <span><%= envelope.name %> — <%= envelope.status %></span>
+        <div class="flex items-center gap-2">
+          <% if envelope.draft? %>
+            <%= link_to 'Edit', edit_transaction_envelope_path(@transaction, envelope) %>
+          <% end %>
+          <% if envelope.submission.present? %>
+            <%= link_to 'View Submission', submission_path(envelope.submission) %>
+          <% end %>
+          <% if envelope.sent? %>
+            <%= link_to 'Void', new_transaction_envelope_void_path(@transaction, envelope), class: 'btn btn-outline btn-sm' %>
+          <% end %>
+        </div>
       </div>
+      <% if envelope.submission.present? %>
+        <% last_event = envelope.submission.submission_events.order(event_timestamp: :desc).first %>
+        <% if last_event %>
+          <p class="text-xs opacity-70">
+            Last activity: <%= last_event.event_type %> at <%= last_event.event_timestamp.strftime('%b %-d, %Y %H:%M') %>
+          </p>
+        <% end %>
+      <% end %>
     </div>
   <% end %>
 </div>
