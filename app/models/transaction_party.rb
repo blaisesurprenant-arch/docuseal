@@ -12,6 +12,7 @@ class TransactionParty < ApplicationRecord
 
   validates :first_name, :last_name, presence: true, if: :individual?
   validates :company_name, :signer_first_name, :signer_last_name, :signer_title, presence: true, if: :business?
+  validates :email, presence: true
 
   def display_name
     if business?

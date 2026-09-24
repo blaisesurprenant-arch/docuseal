@@ -34,6 +34,7 @@ RSpec.describe 'Transaction Parties' do
     fill_in 'new_role_name', with: 'Escrow Agent'
     fill_in 'transaction_party[first_name]', with: 'Sam'
     fill_in 'transaction_party[last_name]', with: 'Lee'
+    fill_in 'transaction_party[email]', with: 'sam@example.com'
 
     expect do
       click_button 'Add Party'

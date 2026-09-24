@@ -48,6 +48,7 @@ RSpec.describe 'Envelope Build - Role Resolution' do
 
     fill_in 'transaction_party[first_name]', with: 'Sam'
     fill_in 'transaction_party[last_name]', with: 'Lee'
+    fill_in 'transaction_party[email]', with: 'sam@example.com'
     click_button 'Add Party'
 
     expect(page).to have_content('All roles resolved')

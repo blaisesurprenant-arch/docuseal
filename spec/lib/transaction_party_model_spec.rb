@@ -41,6 +41,13 @@ RSpec.describe TransactionParty do
     expect(party.errors[:signer_title]).to be_present
   end
 
+  it 'requires an email, individual or business -- without one, no invite can ever be sent' do
+    party = build(:transaction_party, parent_transaction: transaction, role:, email: '')
+
+    expect(party).not_to be_valid
+    expect(party.errors[:email]).to be_present
+  end
+
   it 'builds a display name for an individual' do
     party = build(:transaction_party, parent_transaction: transaction, role:, party_type: 'individual',
                                       first_name: 'Jane', last_name: 'Doe')
