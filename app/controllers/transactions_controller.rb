@@ -6,7 +6,7 @@ class TransactionsController < ApplicationController
   def show
     @transaction.envelopes.where(status: :sent).find_each(&:sync_status_from_submission!)
 
-    @envelopes = @transaction.envelopes.order(created_at: :desc)
+    @envelopes = @transaction.envelopes.includes(submission: :submission_events).order(created_at: :desc)
   end
 
   def new; end

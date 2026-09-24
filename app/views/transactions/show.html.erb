@@ -32,7 +32,7 @@
         </div>
       </div>
       <% if envelope.submission.present? %>
-        <% last_event = envelope.submission.submission_events.order(event_timestamp: :desc).first %>
+        <% last_event = envelope.submission.submission_events.max_by(&:event_timestamp) %>
         <% if last_event %>
           <p class="text-xs opacity-70">
             Last activity: <%= last_event.event_type %> at <%= last_event.event_timestamp.strftime('%b %-d, %Y %H:%M') %>

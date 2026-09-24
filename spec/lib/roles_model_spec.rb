@@ -30,6 +30,14 @@ RSpec.describe Role do
     expect(role).to be_valid
   end
 
+  it 'has a case-insensitive DB constraint backing the app-level uniqueness check' do
+    create(:role, account:, name: 'Buyer')
+
+    expect do
+      Role.new(account:, name: 'buyer').save(validate: false)
+    end.to raise_error(ActiveRecord::RecordNotUnique)
+  end
+
   it 'prevents destroying a role still referenced by a transaction party' do
     role = create(:role, account:)
     create(:transaction_party, role:)
