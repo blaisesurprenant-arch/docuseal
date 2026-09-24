@@ -51,6 +51,8 @@ class Submitter < ApplicationRecord
   attribute :metadata, :string, default: -> { {} }
   attribute :slug, :string, default: -> { SecureRandom.base58(14) }
 
+  after_update_commit :sync_envelope_status!, if: :saved_change_to_declined_at?
+
   serialize :values, coder: JSON
   serialize :preferences, coder: JSON
   serialize :metadata, coder: JSON
@@ -123,6 +125,10 @@ class Submitter < ApplicationRecord
   end
 
   private
+
+  def sync_envelope_status!
+    submission.envelope&.sync_status_from_submission!
+  end
 
   def anonymize_email_events
     email_events.each do |event|

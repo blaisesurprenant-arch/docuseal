@@ -50,8 +50,11 @@ class Submission < ApplicationRecord
 
   has_many :submitters, dependent: :destroy
   has_many :submission_events, dependent: :destroy
+  has_one :envelope, dependent: nil, inverse_of: :submission
 
   attribute :preferences, :string, default: -> { {} }
+
+  after_update_commit :sync_envelope_status!, if: :saved_change_to_completed_at?
 
   serialize :template_fields, coder: JSON
   serialize :template_schema, coder: JSON
@@ -100,6 +103,10 @@ class Submission < ApplicationRecord
                    .where.not(declined_at: nil).limit(1).arel.exists)
   }
   scope :expired, -> { where(expire_at: ..Time.current).where(completed_at: nil) }
+
+  def declined?
+    submitters.where.not(declined_at: nil).exists?
+  end
 
   scope :select_for_list, lambda {
     select(:id, :name, :created_by_user_id, :account_id, :completed_at,
@@ -186,5 +193,11 @@ class Submission < ApplicationRecord
     return if combined_document.blank?
 
     ActiveStorage::Blob.proxy_url(combined_document.blob, expires_at:)
+  end
+
+  private
+
+  def sync_envelope_status!
+    envelope&.sync_status_from_submission!
   end
 end

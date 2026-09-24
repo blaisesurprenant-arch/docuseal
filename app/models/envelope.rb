@@ -15,7 +15,24 @@ class Envelope < ApplicationRecord
   has_many :envelope_parts, dependent: :destroy
   has_many :transaction_parties, through: :envelope_parts
 
-  enum :status, { draft: 0, sent: 1, completed: 2, voided: 3 }
+  enum :status, { draft: 0, sent: 1, completed: 2, voided: 3, declined: 4, expired: 5 }
 
   validates :name, presence: true
+
+  def sync_status_from_submission!
+    return if submission.blank? || voided?
+
+    new_status =
+      if submission.declined?
+        :declined
+      elsif submission.completed_at?
+        :completed
+      elsif submission.expired?
+        :expired
+      else
+        :sent
+      end
+
+    update!(status: new_status) unless new_status.to_s == status
+  end
 end

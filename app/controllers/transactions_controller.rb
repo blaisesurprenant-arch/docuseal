@@ -4,6 +4,8 @@ class TransactionsController < ApplicationController
   load_and_authorize_resource :transaction
 
   def show
+    @transaction.envelopes.where(status: :sent).find_each(&:sync_status_from_submission!)
+
     @envelopes = @transaction.envelopes.order(created_at: :desc)
   end
 

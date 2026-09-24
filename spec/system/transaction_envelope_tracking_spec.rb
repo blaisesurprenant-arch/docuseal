@@ -22,4 +22,17 @@ RSpec.describe 'Transaction Envelope Tracking' do
     expect(page).to have_content('sent')
     expect(page).to have_link('View Submission', href: submission_path(sent_envelope.submission))
   end
+
+  it 'shows an expired envelope as expired without any manual status update' do
+    template = create(:template, account:, author: user)
+    submission = create(:submission, template:, account:, created_by_user: user, expire_at: 1.day.ago)
+    envelope = create(:envelope, parent_transaction: transaction, name: 'Stale Packet', status: :sent,
+                                 template:, submission:)
+
+    visit transaction_path(transaction)
+
+    expect(page).to have_content('Stale Packet')
+    expect(page).to have_content('expired')
+    expect(envelope.reload).to be_expired
+  end
 end
