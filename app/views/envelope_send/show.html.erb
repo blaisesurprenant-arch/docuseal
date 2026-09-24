@@ -15,6 +15,11 @@
   </div>
 
   <div class="form-control mb-4">
+    <%= label_tag 'envelope_expire_at', 'Expires On (optional)' %>
+    <%= date_field_tag 'envelope[expire_at]', nil, id: 'envelope_expire_at', class: 'base-input' %>
+  </div>
+
+  <div class="form-control mb-4">
     <p class="font-bold mb-2">Signing Order</p>
     <label class="flex items-center gap-2">
       <%= radio_button_tag 'envelope[signing_order]', 'sequential', @envelope.signing_order_sequential? %>

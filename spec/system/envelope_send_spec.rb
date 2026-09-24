@@ -83,6 +83,21 @@ RSpec.describe 'Envelope Build - Choose Parties and Send' do
     expect(notary_submitter).to be_viewer
   end
 
+  it 'sets the submission expiration date when provided' do
+    visit transaction_envelope_send_path(transaction, envelope)
+    fill_in 'envelope[expire_at]', with: '2027-01-15'
+    click_button 'Send'
+
+    expect(envelope.reload.submission.expire_at.to_date).to eq(Date.new(2027, 1, 15))
+  end
+
+  it 'leaves the submission without an expiration date when left blank' do
+    visit transaction_envelope_send_path(transaction, envelope)
+    click_button 'Send'
+
+    expect(envelope.reload.submission.expire_at).to be_nil
+  end
+
   it 'blocks sending with zero parties included' do
     visit transaction_envelope_send_path(transaction, envelope)
     uncheck "party_ids_#{buyer.id}"

@@ -34,7 +34,8 @@ class EnvelopeSendController < ApplicationController
         submitters_order: @envelope.signing_order_parallel? ? 'random' : 'preserved',
         template_submitters: merged_template.submitters,
         template_fields: merged_template.fields,
-        template_schema: merged_template.schema
+        template_schema: merged_template.schema,
+        expire_at: params.dig(:envelope, :expire_at).presence
       )
 
       build_submitters(submission, merged_template, parties)
