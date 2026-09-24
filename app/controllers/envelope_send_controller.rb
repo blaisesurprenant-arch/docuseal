@@ -3,6 +3,7 @@
 class EnvelopeSendController < ApplicationController
   load_and_authorize_resource :transaction
   load_and_authorize_resource :envelope, through: :transaction
+  before_action :redirect_if_unresolved_roles
 
   def show
     merged_template = ensure_merged_template
@@ -12,19 +13,46 @@ class EnvelopeSendController < ApplicationController
 
   def create
     party_ids = Array(params[:party_ids]).compact_blank
+    parties = TransactionParty.where(id: party_ids)
 
-    if party_ids.blank?
-      flash.now[:alert] = 'Select at least one party.'
-      @prefillable_fields = merged_template_for_render.fields.select { |f| f['prefillable'] }
-      load_candidate_parties
-      return render :show, status: :unprocessable_content
+    return render_send_error('Select at least one party.') if party_ids.blank?
+
+    duplicate_role_names = parties.includes(:role).group_by { |p| p.role.name }.select { |_, ps| ps.size > 1 }.keys
+
+    if duplicate_role_names.present?
+      return render_send_error(
+        "#{duplicate_role_names.to_sentence} has more than one party checked -- each role can only be sent to " \
+        'one signer. Give co-signers their own role (e.g. "Buyer 1" / "Buyer 2") instead.'
+      )
     end
 
-    parties = TransactionParty.where(id: party_ids)
     merged_template = ensure_merged_template
     signing_order = params.dig(:envelope, :signing_order)
     @envelope.signing_order = signing_order if Envelope.signing_orders.key?(signing_order)
 
+    create_submission_and_send(merged_template, parties)
+
+    redirect_to transaction_envelope_path(@transaction, @envelope), notice: 'Envelope has been sent.'
+  end
+
+  private
+
+  # The roles page only shows "Next: Choose Parties" once every role has a
+  # matching party -- that's a UI-only gate. Without this, navigating (or
+  # POSTing) straight to this URL while a role is still unresolved would
+  # silently send with that role's fields left permanently blank, since
+  # build_submitters just skips a role with no party (next unless party).
+  def redirect_if_unresolved_roles
+    role_names = @envelope.source_templates.flat_map { |t| t.submitters.pluck('name') }.uniq
+    existing_role_names = @transaction.transaction_parties.includes(:role).map { |p| p.role.name }
+
+    return if (role_names - existing_role_names).empty?
+
+    redirect_to transaction_envelope_roles_path(@transaction, @envelope),
+                alert: 'Resolve every role before choosing parties to send to.'
+  end
+
+  def create_submission_and_send(merged_template, parties)
     ActiveRecord::Base.transaction do
       @envelope.save!
       parties.each { |party| @envelope.envelope_parts.create!(transaction_party: party) }
@@ -45,10 +73,21 @@ class EnvelopeSendController < ApplicationController
       @envelope.update!(submission:, status: :sent)
     end
 
-    redirect_to transaction_envelope_path(@transaction, @envelope), notice: 'Envelope has been sent.'
+    # Outside the transaction: Sidekiq enqueuing isn't transactional with the
+    # DB, so this only runs once the submission/submitters are actually
+    # committed. Every other way a Submission gets created in this app
+    # (submissions_controller, the API, the MCP tools) calls this -- it's
+    # what actually enqueues SendSubmitterInvitationEmailJob. Without it the
+    # envelope flips to "sent" but no one is ever notified.
+    Submissions.send_signature_requests([@envelope.submission])
   end
 
-  private
+  def render_send_error(message)
+    flash.now[:alert] = message
+    @prefillable_fields = merged_template_for_render.fields.select { |f| f['prefillable'] }
+    load_candidate_parties
+    render :show, status: :unprocessable_content
+  end
 
   # Merges lazily on first visit so the resulting Template is a real, saved
   # record the user can jump into the standalone template editor and adjust

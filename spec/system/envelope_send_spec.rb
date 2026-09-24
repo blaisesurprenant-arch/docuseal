@@ -136,6 +136,48 @@ RSpec.describe 'Envelope Build - Choose Parties and Send' do
     expect(buyer_submitter.values[merged_field_uuid]).to eq('450000')
   end
 
+  it 'actually notifies the signer -- enqueues the invitation email job on send' do
+    expect do
+      visit transaction_envelope_send_path(transaction, envelope)
+      uncheck "party_ids_#{seller.id}"
+      click_button 'Send'
+    end.to change(SendSubmitterInvitationEmailJob.jobs, :size).by(1)
+
+    buyer_submitter = envelope.reload.submission.submitters.find_by(email: 'jane@example.com')
+    expect(SendSubmitterInvitationEmailJob.jobs.last['args']).to eq([{ 'submitter_id' => buyer_submitter.id }])
+  end
+
+  it "blocks sending with a clear error instead of silently dropping a co-party who shares a role" do
+    co_buyer = create(:transaction_party, parent_transaction: transaction, role: buyer_role, first_name: 'Jo',
+                                          last_name: 'Doe', email: 'jo@example.com')
+
+    visit transaction_envelope_send_path(transaction, envelope)
+    uncheck "party_ids_#{seller.id}"
+
+    expect do
+      click_button 'Send'
+    end.not_to change(Submission, :count)
+
+    expect(page).to have_content('Buyer')
+    expect(page).to have_content('more than one party')
+    expect(envelope.reload).to be_draft
+    expect(TransactionParty.exists?(co_buyer.id)).to be true
+  end
+
+  it 'redirects back to role resolution instead of showing the send page when a role is unresolved' do
+    unresolved_template = create(:template, account:, author: user, submitter_count: 1)
+    unresolved_template.submitters[0]['name'] = 'Agent'
+    unresolved_template.save!
+    unresolved_envelope = create(:envelope, parent_transaction: transaction, name: 'Missing Role Packet')
+    unresolved_envelope.envelope_source_templates.create!(source_template: unresolved_template, position: 0)
+
+    visit transaction_envelope_send_path(transaction, unresolved_envelope)
+
+    expect(page).to have_current_path(transaction_envelope_roles_path(transaction, unresolved_envelope))
+    expect(page).to have_content('Agent')
+  end
+
+
   it 'blocks sending with zero parties included' do
     visit transaction_envelope_send_path(transaction, envelope)
     uncheck "party_ids_#{buyer.id}"
