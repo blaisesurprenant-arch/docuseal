@@ -35,8 +35,8 @@ class RolesController < ApplicationController
   private
 
   def role_params
-    return params.require(:roles).require(@role.id.to_s).permit(:name) if params[:roles].present?
+    return params.require(:roles).require(@role.id.to_s).permit(:name, :is_viewer) if params[:roles].present?
 
-    params.require(:role).permit(:name)
+    params.require(:role).permit(:name, :is_viewer)
   end
 end

@@ -73,4 +73,20 @@ RSpec.describe Envelopes::Merge do
     expect(envelope.template).to be_present
     expect(envelope.reload.template_id).to be_nil
   end
+
+  it 'marks a CC-role submitter as a viewer, leaving normal roles untouched' do
+    buyer_role
+    create(:role, account:, name: 'Notary', is_viewer: true)
+    template_a = template_with_role_names('Buyer', 'Notary')
+    envelope = create(:envelope, parent_transaction: transaction)
+    envelope.envelope_source_templates.create!(source_template: template_a, position: 0)
+
+    merged = Envelopes::Merge.call(envelope:, author:)
+
+    buyer_submitter = merged.submitters.find { |s| s['name'] == 'Buyer' }
+    notary_submitter = merged.submitters.find { |s| s['name'] == 'Notary' }
+
+    expect(buyer_submitter['is_viewer']).to be_falsy
+    expect(notary_submitter['is_viewer']).to be true
+  end
 end

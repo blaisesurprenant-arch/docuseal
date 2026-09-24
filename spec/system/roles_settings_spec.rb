@@ -51,6 +51,31 @@ RSpec.describe 'Roles Settings' do
     expect(role.reload.name).to eq('Purchaser')
   end
 
+  it 'creates a CC / view-only role' do
+    visit settings_roles_path
+
+    fill_in 'role[name]', with: 'Notary'
+    check 'role[is_viewer]'
+
+    expect do
+      click_button 'Add Role'
+    end.to change(Role, :count).by(1)
+
+    expect(account.roles.last).to be_is_viewer
+  end
+
+  it 'toggles a role to CC / view-only' do
+    role = create(:role, account:, name: 'Lender', is_viewer: false)
+
+    visit settings_roles_path
+    within "#role_#{role.id}" do
+      check "roles[#{role.id}][is_viewer]"
+      click_button 'Save'
+    end
+
+    expect(role.reload).to be_is_viewer
+  end
+
   it 'deletes an unused role' do
     create(:role, account:, name: 'Buyer')
 

@@ -66,6 +66,23 @@ RSpec.describe 'Envelope Build - Choose Parties and Send' do
     expect(envelope).to be_signing_order_parallel
   end
 
+  it 'marks a CC-role submitter as a viewer end to end' do
+    create(:role, account:, name: 'Notary', is_viewer: true)
+    notary = create(:transaction_party, parent_transaction: transaction, role: Role.find_by(name: 'Notary'),
+                                        first_name: 'Pat', last_name: 'Reed', email: 'pat@example.com')
+    notary_template = create(:template, account:, author: user, submitter_count: 1)
+    notary_template.submitters[0]['name'] = 'Notary'
+    notary_template.save!
+    notary_envelope = create(:envelope, parent_transaction: transaction, name: 'Notarized Packet')
+    notary_envelope.envelope_source_templates.create!(source_template: notary_template, position: 0)
+
+    visit transaction_envelope_send_path(transaction, notary_envelope)
+    click_button 'Send'
+
+    notary_submitter = notary_envelope.reload.submission.submitters.find_by(email: notary.email)
+    expect(notary_submitter).to be_viewer
+  end
+
   it 'blocks sending with zero parties included' do
     visit transaction_envelope_send_path(transaction, envelope)
     uncheck "party_ids_#{buyer.id}"

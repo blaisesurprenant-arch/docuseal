@@ -9,6 +9,10 @@
           <span class="font-medium"><%= role.name %></span>
           <%= form_for role, url: settings_role_path(role), method: :patch, html: { class: 'flex items-center gap-2' } do |f| %>
             <%= f.text_field :name, name: "roles[#{role.id}][name]", value: role.name, class: 'base-input' %>
+            <label class="flex items-center gap-1 text-sm">
+              <%= hidden_field_tag "roles[#{role.id}][is_viewer]", '0', id: nil %>
+              <%= check_box_tag "roles[#{role.id}][is_viewer]", '1', role.is_viewer? %> CC only
+            </label>
             <%= f.submit 'Save', class: 'btn btn-neutral btn-sm' %>
           <% end %>
           <%= button_to 'Delete', settings_role_path(role), method: :delete, form: { data: { turbo_confirm: 'Are you sure?' } }, class: 'btn btn-outline btn-sm' %>

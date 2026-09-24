@@ -19,7 +19,7 @@ module Envelopes
       source_attachment_uuids_by_template_id = {}
 
       envelope.source_templates.each do |source_template|
-        merge_source_template(merged, source_template, role_uuid_by_name)
+        merge_source_template(merged, source_template, role_uuid_by_name, author.account)
 
         source_attachment_uuids_by_template_id[source_template.id] =
           source_template.schema.pluck('attachment_uuid')
@@ -34,7 +34,7 @@ module Envelopes
       merged
     end
 
-    def merge_source_template(merged, source_template, role_uuid_by_name)
+    def merge_source_template(merged, source_template, role_uuid_by_name, account)
       cloned_submitters, cloned_fields, cloned_schema, =
         Templates::Clone.update_submitters_and_fields_and_schema(
           source_template.submitters.deep_dup,
@@ -52,6 +52,7 @@ module Envelopes
           uuid_remap[submitter['uuid']] = canonical_uuid
         else
           role_uuid_by_name[submitter['name']] = submitter['uuid']
+          submitter['is_viewer'] = true if account.roles.find_by(name: submitter['name'])&.is_viewer?
           merged.submitters << submitter
         end
       end

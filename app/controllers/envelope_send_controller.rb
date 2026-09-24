@@ -31,7 +31,10 @@ class EnvelopeSendController < ApplicationController
         account: current_account,
         template: merged_template,
         created_by_user: current_user,
-        submitters_order: @envelope.signing_order_parallel? ? 'random' : 'preserved'
+        submitters_order: @envelope.signing_order_parallel? ? 'random' : 'preserved',
+        template_submitters: merged_template.submitters,
+        template_fields: merged_template.fields,
+        template_schema: merged_template.schema
       )
 
       build_submitters(submission, merged_template, parties)
